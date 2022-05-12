@@ -1,11 +1,12 @@
 from traceback import print_tb
+from matplotlib.pyplot import axis
 import numpy as np
-
+import pandas as pd
 
 class Fastron:
-    def __init__(self, input_data, y):
+    def __init__(self):
         # gamma (kernel width), beta (conditional bias)
-        self.gamma = 30
+        self.gamma = 24
         self.beta = 1
 
         # max update iterations, max number of support points
@@ -14,11 +15,12 @@ class Fastron:
 
         # count of points with nonzero weights
         self.numberSupportPoints = 0
+        self.whole_pos_points = None
+        self.whole_neg_points = None
 
+    def feed(self, X, y):
         # dataset
-        self.data = input_data
-
-        # support points
+        self.data = X
 
         # number of datapoints and dimensionality
         self.N = self.data.shape[0]
@@ -33,6 +35,7 @@ class Fastron:
         self.y = y
 
         self.gramComputed = np.zeros(shape=(self.N))
+
 
     def kernel(self, target, type):
         if type == 1:
@@ -61,6 +64,8 @@ class Fastron:
         return predicts
 
     def updateModel(self):
+        # self.data = X
+        # self.y = y
         margin = self.y*self.F
         for i in range(self.maxUpdates):
             # print("==========iteration: ", i)
@@ -78,6 +83,7 @@ class Fastron:
                     self.computeGramMatrixCol(idx)
                 # One-step weight correction
                 delta = (-1.0 if self.y[idx] < 0 else self.beta) - self.F[idx]
+                # delta = self.y[idx]
                 # print("delta: ", delta)
                 if self.alpha[idx] > 0:
                     self.alpha[idx] += delta
@@ -109,7 +115,16 @@ class Fastron:
                 return
             else:
                 print("Success: Model update complete in {} iterations!".format(i))
+                self.converge_interation = i
                 self.sparsity()
+                if self.whole_pos_points is None and self.whole_neg_points is None:
+                    self.whole_pos_points = self.pos_points
+                    self.whole_neg_points = self.neg_points
+                else:
+                    print(self.whole_pos_points.shape)
+                    print(self.pos_points.shape)
+                    self.whole_pos_points = np.concatenate((self.whole_pos_points, self.pos_points), axis=0)
+                    self.whole_neg_points = np.concatenate((self.whole_neg_points, self.neg_points), axis=0)
                 return
         print("Failed to converge after {} iterations!".format(self.maxUpdates))
         self.sparsity()
@@ -164,3 +179,4 @@ class Fastron:
             for idx_j, val_j in enumerate(keep_inds):
                 temp[idx_i][idx_j] = self.G[val_i][val_j]
         self.G = temp
+
