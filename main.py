@@ -1,7 +1,9 @@
+from math import floor
 from skm.fastron import Fastron
-from skm.utils import plot_decision_boundary, plot2
+from skm.utils import *
 import numpy as np
 import pandas as pd
+import time
 
 fn_train = './data/intel.csv'
 # read data
@@ -15,8 +17,10 @@ Y_test = np.float_(g[::10, 3][:, np.newaxis]).ravel()  # * 2 - 1
 print(len(g), len(Y_test), len(Y_train))
 print(sum(Y_train), sum(Y_test))
 
-
-max_t = 1
+tmp=[]
+spoint_count = []
+max_t = 10
+model = Fastron()
 print("Total number of scans = ", max_t)
 for ith_scan in range(0, max_t, 1):
     # extract data points of the ith scan
@@ -25,19 +29,17 @@ for ith_scan in range(0, max_t, 1):
     y = Y_train[ith_scan_indx]
     X = X_train[ith_scan_indx, 1:]
     y[y<0.5] = -1
-    model = Fastron(X, y)
+    start = time.time()
+    model.feed(X,y)
     model.updateModel()
-    # print("amount of support points: ", model.numberSupportPoints)
-    # print("alpha: ", model.alpha)
-    # print("+ alpha: ", model.pos_alpha)
-    # print("- alpha: ", model.neg_alpha)
-    # print("dicesion boundary: ", model.F)
-    # print("support point: ",model.data)
-    # print("+ support point: ",model.pos_points)
-    # print("- support point: ",model.neg_points)
-    # print(model.G)
-    # plot_decision_boundary(X, y, model, ith_scan)
-    plot2(X, y, model)
+    end = time.time()
+    spoint_count.append([ith_scan+1, len(model.alpha), len(model.pos_alpha), len(model.neg_alpha)])
+    # tmp.append([ith_scan+1, len(y), model.converge_interation, round((end-start)*1000, 2)])
+    # debug(model)
+    # plot3(X, y, model, ith_scan)
+    plot5(X,y,model,ith_scan)
     
 
+# save_params(tmp)
+# compare_support_points(spoint_count)
 
